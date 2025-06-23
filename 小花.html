@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>小花工具箱</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+  <style>
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(12px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    
+    @keyframes modalFadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(20px) scale(0.95);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+    
+    .animate-fade-in {
+      animation: fadeIn 0.5s ease-out forwards;
+    }
+    
+    .tool-button {
+      transition: all 0.3s ease;
+      transform: translateY(0);
+    }
+    
+    .tool-button:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+    }
+    
+    /* 工具卡片布局 */
+    .tool-card {
+      display: flex;
+      flex-direction: row;
+      gap: 20px;
+      align-items: flex-start;
+    }
+    
+    .tool-info {
+      flex: 1;
+    }
+    
+    /* 图片容器 */
+    .image-container {
+      width: 120px;
+      height: 120px;
+      border-radius: 16px;
+      border: 3px solid white;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      overflow: hidden;
+      flex-shrink: 0;
+      background-color: #f9f9f9;
+    }
+    
+    .image-container img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    
+    /* 响应式调整 */
+    @media (max-width: 768px) {
+      .tool-card {
+        flex-direction: column;
+        align-items: center;
+      }
+      
+      .image-container {
+        width: 100px;
+        height: 100px;
+      }
+      
+      .tool-info {
+        text-align: center;
+      }
+    }
+    
+    /* 按钮图标动画 */
+    .tool-button i {
+      transition: transform 0.3s ease;
+    }
+    
+    .tool-button:hover i {
+      transform: scale(1.1);
+    }
+    
+    /* 欢迎弹窗样式 */
+    #welcomeModal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.7);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+      backdrop-filter: blur(5px);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.4s ease;
+    }
+    
+    #welcomeModal.active {
+      opacity: 1;
+      pointer-events: all;
+    }
+    
+    .modal-content {
+      background: linear-gradient(135deg, #ffffff 0%, #f9f0ff 100%);
+      border-radius: 20px;
+      width: 90%;
+      max-width: 500px;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+      overflow: hidden;
+      transform: translateY(20px);
+      transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      border: 1px solid rgba(255, 255, 255, 0.5);
+    }
+    
+    #welcomeModal.active .modal-content {
+      transform: translateY(0);
+      animation: modalFadeIn 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    
+    .modal-header {
+      background: linear-gradient(90deg, #ff7eb3 0%, #ff758c 100%);
+      padding: 25px 30px;
+      text-align: center;
+      position: relative;
+    }
+    
+    .modal-header h2 {
+      color: white;
+      font-size: 1.8rem;
+      font-weight: 700;
+      margin: 0;
+      letter-spacing: 1px;
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    
+    .modal-body {
+      padding: 30px;
+      text-align: center;
+    }
+    
+    .modal-icon {
+      font-size: 4rem;
+      color: #ff7eb3;
+      margin-bottom: 20px;
+      animation: pulse 2s infinite;
+    }
+    
+    @keyframes pulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.1); }
+      100% { transform: scale(1); }
+    }
+    
+    .modal-body p {
+      color: #6b7280;
+      font-size: 1.1rem;
+      line-height: 1.6;
+      margin-bottom: 25px;
+    }
+    
+    .modal-footer {
+      display: flex;
+      justify-content: center;
+      padding: 0 30px 30px;
+      gap: 15px;
+    }
+    
+    .modal-btn {
+      flex: 1;
+      padding: 14px 20px;
+      border-radius: 12px;
+      font-weight: 600;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      border: none;
+      outline: none;
+      max-width: 180px;
+    }
+    
+    .confirm-btn {
+      background: linear-gradient(90deg, #ff7eb3 0%, #ff758c 100%);
+      color: white;
+      box-shadow: 0 4px 15px rgba(255, 117, 140, 0.4);
+    }
+    
+    .cancel-btn {
+      background: transparent;
+      color: #6b7280;
+      border: 2px solid #e5e7eb;
+    }
+    
+    .modal-btn:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 7px 20px rgba(0, 0, 0, 0.15);
+    }
+    
+    .confirm-btn:hover {
+      box-shadow: 0 7px 20px rgba(255, 117, 140, 0.5);
+    }
+    
+    .cancel-btn:hover {
+      background: #f9fafb;
+    }
+    
+    .modal-highlight {
+      color: #ff7eb3;
+      font-weight: bold;
+    }
+    
+    .confetti {
+      position: absolute;
+      width: 10px;
+      height: 10px;
+      background-color: #f0f;
+      opacity: 0.8;
+      animation: fall linear forwards;
+    }
+    
+    @keyframes fall {
+      to {
+        transform: translateY(100vh) rotate(360deg);
+        opacity: 0;
+      }
+    }
+  </style>
+</head>
+
+<body class="bg-gray-50 min-h-screen flex flex-col">
+  <!-- 欢迎弹窗 -->
+  <div id="welcomeModal" class="active">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>欢迎使用小花工具箱</h2>
+      </div>
+      <div class="modal-body">
+        <div class="modal-icon">
+          <i class="fa fa-heart"></i>
+        </div>
+        <p>
+          感谢您使用<span class="modal-highlight">小花工具箱</span>！这里汇集了多种实用工具，全部<span class="modal-highlight">免费、无需注册</span>，旨在提高您的工作效率和生活便利性。           
+          请<span class="modal-highlight">确认</span>您已了解本工具箱仅供学习交流，点击下方按钮继续使用！
+        </p>
+        <p>
+        本工具不会要求你强制更新 不过想要体验最新版本和更多内容 请持续关注平台 <span class="modal-highlight">https://t.me/XHSJNB</span> 
+        </p>
+      </div>
+      <div class="modal-footer">
+        <button class="modal-btn cancel-btn">取消</button>
+        <button class="modal-btn confirm-btn">确定</button>
+      </div>
+    </div>
+  </div>
+  
+  <!-- 顶部导航 -->
+  <header class="bg-white shadow-sm sticky top-0 z-50">
+    <div class="container mx-auto px-4 py-3 flex justify-between items-center">
+      <div class="flex items-center space-x-2">
+        <i class="fa fa-wrench text-pink-500 text-2xl"></i>
+        <h1 class="text-xl md:text-2xl font-bold text-gray-800">小花工具箱</h1>
+      </div>
+      <div class="flex items-center space-x-3">
+        <button class="text-gray-500 hover:text-pink-500 transition-colors" id="helpBtn">
+          <i class="fa fa-question-circle text-lg"></i>
+        </button>
+      </div>
+    </div>
+  </header>
+  
+  <!-- 主内容区 -->
+  <main class="flex-grow container mx-auto px-4 py-6 md:py-8">
+    <!-- 工具介绍卡片 - 图片在左，文字在右 -->
+    <section class="bg-white rounded-2xl shadow-md p-5 mb-6 animate-fade-in">
+      <div class="tool-card">
+        <!-- 左侧小花图片 -->
+        <div class="image-container">
+          <img src="https://cccimg.com/view.php/d10349afa6058042d1ad19bee18c2565.jpg" alt="小花工具箱">
+        </div>
+        
+        <!-- 右侧文字内容 -->
+        <div class="tool-info">
+          <h2 class="text-xl font-bold text-gray-800 mb-2">小花工具箱</h2>
+          <div class="flex flex-wrap gap-2 mb-3">
+            <span class="bg-pink-100 text-pink-700 text-xs px-2 py-1 rounded">免费工具</span>
+            <span class="bg-pink-100 text-pink-700 text-xs px-2 py-1 rounded">无需注册</span>
+            <span class="bg-pink-100 text-pink-700 text-xs px-2 py-1 rounded">永久公益</span>
+            <span class="bg-pink-100 text-pink-700 text-xs px-2 py-1 rounded">@XHSJNB</span>
+          </div>
+          
+          <p class="text-gray-600 text-sm mb-4">
+            集合多种实用工具，提高您的工作效率和生活便利性。所有工具均可免费使用，无需注册，持续更新中。
+          </p>
+          
+          <div class="flex items-center text-gray-500 text-sm">
+            <i class="fa fa-star text-yellow-400 mr-1"></i>
+            <span class="mr-3">4/2/0</span>
+            <i class="fa fa-download text-blue-500 mr-1"></i>
+            <span>99+ 次使用</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 工具箱按钮区域 - 一行两个按钮 -->
+    <section class="bg-white rounded-2xl shadow-md p-5 mb-6">
+      <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+        <i class="fa fa-cube text-pink-500 mr-2"></i>常用工具
+      </h3>
+      
+      <!-- 两列按钮布局 - 一行两个，共三行六个按钮 -->
+      <div class="grid grid-cols-2 gap-3">
+        <!-- 第一行 -->
+        <a href="http://m.webcats.cn/bx/124739/52533" class="tool-button bg-pink-500 hover:bg-pink-600 text-white font-medium py-3 rounded-lg shadow flex items-center justify-center text-sm">
+          <i class="fa fa-image mr-2"></i>小花AI
+        </a>
+        
+        <a href="http://m.webcats.cn/bx/124739/52437" class="tool-button bg-pink-500 hover:bg-pink-600 text-white font-medium py-3 rounded-lg shadow flex items-center justify-center text-sm">
+          <i class="fa fa-file-pdf-o mr-2"></i>临时邮箱
+        </a>
+        
+        <!-- 第二行 -->
+        <a href="http://m.webcats.cn/bx/124739/52175" class="tool-button bg-pink-500 hover:bg-pink-600 text-white font-medium py-3 rounded-lg shadow flex items-center justify-center text-sm">
+          <i class="fa fa-qrcode mr-2"></i>视频去水印
+        </a>
+        
+        <a href="http://m.webcats.cn/bx/124739/52536" class="tool-button bg-pink-500 hover:bg-pink-600 text-white font-medium py-3 rounded-lg shadow flex items-center justify-center text-sm">
+          <i class="fa fa-language mr-2"></i>文字加密
+        </a>
+        
+        <!-- 第三行 -->
+        <a href="http://m.webcats.cn/bx/124739/52537" class="tool-button bg-pink-500 hover:bg-pink-600 text-white font-medium py-3 rounded-lg shadow flex items-center justify-center text-sm">
+          <i class="fa fa-clock-o mr-2"></i>二维码生成器
+        </a>
+        
+        <a href="http://m.webcats.cn/bx/124739/52538" class="tool-button bg-pink-500 hover:bg-pink-600 text-white font-medium py-3 rounded-lg shadow flex items-center justify-center text-sm">
+          <i class="fa fa-eyedropper mr-2"></i>图片转像素
+        </a>
+        
+         <a href="https://github.com/" class="tool-button bg-pink-500 hover:bg-pink-600 text-white font-medium py-3 rounded-lg shadow flex items-center justify-center text-sm">
+          <i class="fa fa-clock-o mr-2"></i>GitHub（官网）
+        </a>
+        
+        <a href="https://fly63.com/tool/giftxt/" class="tool-button bg-pink-500 hover:bg-pink-600 text-white font-medium py-3 rounded-lg shadow flex items-center justify-center text-sm">
+          <i class="fa fa-eyedropper mr-2"></i>视频转动图
+        </a>
+        
+        <a href="https://cccimg.com/" class="tool-button bg-pink-500 hover:bg-pink-600 text-white font-medium py-3 rounded-lg shadow flex items-center justify-center text-sm">
+          <i class="fa fa-clock-o mr-2"></i>公益无限制外链网盘
+        </a>
+        
+        <a href="https://www.dzmm.io/" class="tool-button bg-pink-500 hover:bg-pink-600 text-white font-medium py-3 rounded-lg shadow flex items-center justify-center text-sm">
+          <i class="fa fa-eyedropper mr-2"></i>无限制聊天AI（可色情）
+        </a>
+        
+        <a href="https://user.mihoyo.com/passport/index.html?legacy_env=production#/login?is_from_legacy=1" class="tool-button bg-pink-500 hover:bg-pink-600 text-white font-medium py-3 rounded-lg shadow flex items-center justify-center text-sm">
+          <i class="fa fa-clock-o mr-2"></i>米哈游通行证
+        </a>
+        
+        <a href="https://t.me/XHSJNB" class="tool-button bg-pink-500 hover:bg-pink-600 text-white font-medium py-3 rounded-lg shadow flex items-center justify-center text-sm">
+          <i class="fa fa-eyedropper mr-2"></i>源码分享开源频道（需要搭配网络梯子）
+        </a>
+        
+      </div>
+    </section>
+
+    <!-- 使用说明 -->
+    <section class="bg-white rounded-2xl shadow-md p-5">
+      <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+        <i class="fa fa-book text-pink-500 mr-2"></i>使用步骤
+      </h3>
+
+      <div class="space-y-3">
+        <div class="flex gap-3 items-start">
+          <div class="flex-shrink-0 bg-pink-100 text-pink-500 rounded-full w-7 h-7 flex items-center justify-center mt-0.5 text-sm">1</div>
+          <div>
+            <p class="font-medium text-gray-800 text-sm">选择所需工具</p>
+            <p class="text-gray-600 text-xs">从工具箱中选择您需要使用的工具</p>
+          </div>
+        </div>
+
+        <div class="flex gap-3 items-start">
+          <div class="flex-shrink-0 bg-pink-100 text-pink-500 rounded-full w-7 h-7 flex items-center justify-center mt-0.5 text-sm">2</div>
+          <div>
+            <p class="font-medium text-gray-800 text-sm">点击进入工具页面</p>
+            <p class="text-gray-600 text-xs">点击工具按钮进入相应工具页面</p>
+          </div>
+        </div>
+
+        <div class="flex gap-3 items-start">
+          <div class="flex-shrink-0 bg-pink-100 text-pink-500 rounded-full w-7 h-7 flex items-center justify-center mt-0.5 text-sm">3</div>
+          <div>
+            <p class="font-medium text-gray-800 text-sm">使用工具功能</p>
+            <p class="text-gray-600 text-xs">根据页面指引使用工具完成您的任务</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="mt-5 p-3 bg-blue-50 rounded-lg border-l-4 border-blue-400">
+        <h4 class="font-medium text-gray-800 text-sm mb-1 flex items-center">
+          <i class="fa fa-lightbulb-o text-blue-500 mr-2"></i>小技巧
+        </h4>
+        <p class="text-gray-700 text-xs">
+          将常用工具添加到浏览器书签，可以更快速地访问您最需要的工具
+        </p>
+      </div>
+    </section>
+  </main>
+  
+  <!-- 页脚 -->
+  <footer class="bg-gray-800 text-white py-5 mt-6">
+    <div class="container mx-auto px-4 text-center">
+      <p class="mb-1 text-sm">小花实用工具箱 © XHSJNB</p>
+      <p class="text-gray-400 text-xs">仅用于个人学习交流，请勿用于商业用途 | <button id="aboutBtn" class="text-pink-300 hover:underline">关于工具</button></p>
+    </div>
+  </footer>
+  
+  <!-- 关于弹窗 -->
+  <div id="aboutModal" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center hidden">
+    <div class="bg-white rounded-xl p-5 max-w-md w-full mx-4">
+      <div class="text-center">
+        <div class="mx-auto mb-3">
+          <!-- 弹窗中的图片 -->
+          <div class="image-container mx-auto">
+            <img src="https://cccimg.com/view.php/d10349afa6058042d1ad19bee18c2565.jpg" alt="小花工具箱">
+          </div>
+        </div>
+        <h3 class="text-lg font-semibold text-gray-800 mb-3">关于小花实用工具箱</h3>
+        <p class="text-gray-600 text-sm mb-4">
+          本工具箱集合了多种实用工具，旨在提高用户的工作效率和生活便利性。
+          所有工具均可免费使用，无需注册，持续更新中。
+          本工具不会强制更新 所以如果想要获得最新版本 请持续关注官方平台
+          https://t.me/XHSJNB
+        </p>
+        <div class="mt-4 pt-4 border-t border-gray-200">
+          <p class="text-xs text-gray-500">版本 1.0.0 | 最后更新 2025-6-23</p>
+        </div>
+        <button id="closeAboutModal" class="mt-5 w-full bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium py-2 px-6 rounded-lg transition-colors text-sm">
+          关闭
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // 页面加载完成后执行
+    document.addEventListener('DOMContentLoaded', function() {
+      const aboutBtn = document.getElementById('aboutBtn');
+      const aboutModal = document.getElementById('aboutModal');
+      const closeAboutModal = document.getElementById('closeAboutModal');
+      const helpBtn = document.getElementById('helpBtn');
+      const welcomeModal = document.getElementById('welcomeModal');
+      const cancelBtn = document.querySelector('.cancel-btn');
+      const confirmBtn = document.querySelector('.confirm-btn');
+      
+      // 显示欢迎弹窗
+      setTimeout(() => {
+        welcomeModal.classList.add('active');
+        
+        // 添加一些彩色纸屑效果
+        createConfetti();
+      }, 500);
+      
+      // 关闭欢迎弹窗函数
+      function closeWelcomeModal() {
+        welcomeModal.classList.remove('active');
+        setTimeout(() => {
+          welcomeModal.style.display = 'none';
+        }, 400);
+      }
+      
+      // 取消按钮点击事件
+      cancelBtn.addEventListener('click', closeWelcomeModal);
+      
+      // 确定按钮点击事件
+      confirmBtn.addEventListener('click', closeWelcomeModal);
+      
+      // 创建彩色纸屑效果
+      function createConfetti() {
+        const colors = ['#ff7eb3', '#ff758c', '#ff65a3', '#fe6b8b', '#ff9a9e'];
+        const container = document.querySelector('.modal-body');
+        
+        for (let i = 0; i < 50; i++) {
+          const confetti = document.createElement('div');
+          confetti.className = 'confetti';
+          confetti.style.left = Math.random() * 100 + '%';
+          confetti.style.top = Math.random() * 100 + '%';
+          confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+          confetti.style.width = Math.random() * 8 + 4 + 'px';
+          confetti.style.height = confetti.style.width;
+          confetti.style.borderRadius = Math.random() > 0.5 ? '50%' : '0';
+          confetti.style.animationDuration = Math.random() * 3 + 2 + 's';
+          confetti.style.animationDelay = Math.random() * 2 + 's';
+          
+          container.appendChild(confetti);
+          
+          // 动画结束后移除元素
+          setTimeout(() => {
+            confetti.remove();
+          }, 5000);
+        }
+      }
+      
+      // 关于按钮点击事件
+      aboutBtn.addEventListener('click', () => {
+        aboutModal.classList.remove('hidden');
+      });
+      
+      // 关闭关于弹窗
+      closeAboutModal.addEventListener('click', () => {
+        aboutModal.classList.add('hidden');
+      });
+
+      // 帮助按钮点击事件
+      helpBtn.addEventListener('click', () => {
+        alert('小花工具箱使用帮助：\n1. 选择您需要的工具\n2. 点击工具按钮进入相应页面\n3. 根据页面指引使用工具');
+      });
+
+      // 工具按钮悬停效果
+      document.querySelectorAll('.tool-button').forEach(button => {
+        button.addEventListener('mouseenter', function() {
+          this.style.transform = 'translateY(-3px)';
+          this.style.boxShadow = '0 10px 20px rgba(0, 0, 0, 0.1)';
+        });
+        button.addEventListener('mouseleave', function() {
+          this.style.transform = 'translateY(0)';
+          this.style.boxShadow = '';
+        });
+      });
+    });
+  </script>
+</body>
+</html>
